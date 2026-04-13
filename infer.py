@@ -40,7 +40,7 @@ CLUSTER_LABELS = {
 }
 
 logger.info("Loading models...")
-w2v    = KeyedVectors.load(f"{MODEL_DIR}/recipe_engine.kv", mmap="r")
+w2v    = KeyedVectors.load(f"{MODEL_DIR}/recipe_engine.kv")
 kmeans = joblib.load(f"{MODEL_DIR}/recipe_clusterer.joblib")
 pca    = joblib.load(f"{MODEL_DIR}/recipe_pca.joblib")
 
