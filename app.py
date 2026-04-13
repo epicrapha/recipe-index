@@ -7,38 +7,43 @@ import streamlit as st
 import time
 from infer import find_recipes
 
-# Setup page config for a cleaner, modern look
 st.set_page_config(
     page_title="Culinary Index",
     page_icon="🍽️",
     layout="centered",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="auto"
 )
 
-# Custom CSS for an Avant-Garde Minimalist Aesthetic
+# Initialize Session State Notebook
+if "cookbook" not in st.session_state:
+    st.session_state.cookbook = {}
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
 
-/* Base Styles */
 html, body, [class*="css"] {
     font-family: 'Outfit', sans-serif !important;
     background-color: #050505;
     color: #E2E2E2;
 }
 
-/* Hide standard Streamlit elements */
 #MainMenu {visibility: hidden;}
 header {visibility: hidden;}
 footer {visibility: hidden;}
 
-/* Typography */
 h1 {
     font-weight: 300 !important;
     letter-spacing: -0.05em;
     font-size: 3.5rem !important;
     color: #FFFFFF;
-    margin-bottom: 2rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Sidebar styling */
+[data-testid="stSidebar"] {
+    background-color: #0A0A0A;
+    border-right: 1px solid #1A1A1A;
 }
 
 /* Input Fields */
@@ -57,6 +62,28 @@ div.stTextInput > div > div > input:focus {
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
+/* Tabs Styling */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 2rem;
+    background-color: transparent;
+}
+.stTabs [data-baseweb="tab"] {
+    height: 50px;
+    white-space: pre-wrap;
+    background-color: transparent;
+    border-radius: 4px 4px 0px 0px;
+    gap: 1px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: #888;
+    font-weight: 400;
+}
+.stTabs [aria-selected="true"] {
+    color: #FFF !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid #FFF !important;
+}
+
 /* Glassmorphism Cards */
 .recipe-card {
     background: rgba(255, 255, 255, 0.02);
@@ -65,7 +92,7 @@ div.stTextInput > div > div > input:focus {
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 16px;
     padding: 1.8rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
 }
 .recipe-card:hover {
@@ -86,9 +113,6 @@ div.stTextInput > div > div > input:focus {
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
 }
 .similarity-score {
     background: rgba(255,255,255,0.05);
@@ -103,7 +127,6 @@ div.stTextInput > div > div > input:focus {
     margin-bottom: 1rem;
 }
 
-/* UI Details */
 .cluster-badge {
     display: inline-block;
     padding: 0.3rem 0.8rem;
@@ -116,81 +139,130 @@ div.stTextInput > div > div > input:focus {
     letter-spacing: 0.1em;
     margin-bottom: 2rem;
 }
-.stExpander {
-    background: transparent !important;
-    border: none !important;
-    border-top: 1px solid #222 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-}
-.stExpander summary {
-    font-weight: 400 !important;
-    color: #888 !important;
-    letter-spacing: 0.05em;
-    font-size: 0.9rem;
-    padding: 1rem 0 !important;
-}
-.directions-text {
-    color: #CCC;
+
+/* Custom Checkbox */
+.stCheckbox > div {
     font-weight: 300;
-    line-height: 1.8;
-    font-size: 0.95rem;
-    padding-bottom: 1rem;
+    color: #E2E2E2;
 }
 
-/* Spinner adjustment */
-.stSpinner > div > div {
-    border-color: #333 !important;
-    border-top-color: #FFF !important;
+/* Buttons */
+.stButton > button {
+    border-radius: 8px;
+    background-color: #1A1A1A;
+    border: 1px solid #333;
+    color: #DDD;
+    font-weight: 400;
+    transition: all 0.3s ease;
+}
+.stButton > button:hover {
+    border-color: #FFF;
+    color: #FFF;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# Main App UI
+# Application Header
 st.markdown("<h1>Culinary Index.</h1>", unsafe_allow_html=True)
 
-# Minimal Input
-query = st.text_input(
-    label="Search",
-    label_visibility="collapsed",
-    placeholder="Enter ingredients e.g. chicken garlic soy sauce vinegar..."
-)
+# Sidebar Configuration
+with st.sidebar:
+    st.markdown("### Settings")
+    max_results = st.slider("Maximum Discoveries", min_value=1, max_value=10, value=5)
+    st.markdown("---")
+    st.markdown("Avant-Garde Architectural Deployment.")
+    st.markdown(f"**Saved Recipes:** {len(st.session_state.cookbook)}")
 
-if query:
-    with st.spinner("Decoding flavor profiles..."):
-        try:
-            # We add a slight artificial delay purely for the "premium" feeling of processing
-            time.sleep(0.4)
-            result = find_recipes(query, top_n=5)
-            
-            # Show category badge
-            st.markdown(f'<div class="cluster-badge">Topology: {result["cluster_label"]}</div>', unsafe_allow_html=True)
-            
-            # Render each card
-            for index, recipe in enumerate(result["similar_recipes"]):
-                score = recipe["similarity"] * 100
-                title = recipe["title"]
-                ingredients_list = ", ".join(recipe["ingredients"])
-                
-                # HTML template for the card
-                card_html = f'''
-                <div class="recipe-card">
-                    <div class="recipe-title">{title}</div>
-                    <div class="recipe-meta">
-                        <span class="similarity-score">{score:.1f}% Match</span>
-                    </div>
-                    <div class="recipe-ingredients">
-                        <strong style="color:#FFF;">Components:</strong><br/>
-                        {ingredients_list}
-                    </div>
-                </div>
-                '''
-                st.markdown(card_html, unsafe_allow_html=True)
-                
-                # We place the expander immediately below natively to keep functionality
-                with st.expander("Preparation Protocol"):
-                    for step in recipe["directions"]:
-                        st.markdown(f'<div class="directions-text">• {step}</div>', unsafe_allow_html=True)
+# Main Tabs
+tab1, tab2 = st.tabs(["🔍 Discovery", "📖 The Cookbook"])
 
-        except Exception as e:
-            st.error("No valid flavor topology found. Try more common ingredients.")
+with tab1:
+    query = st.text_input(
+        label="Search",
+        label_visibility="collapsed",
+        placeholder="Enter ingredients e.g. chicken garlic soy sauce vinegar..."
+    )
+
+    if query:
+        with st.spinner("Decoding flavor profiles..."):
+            try:
+                time.sleep(0.4)
+                result = find_recipes(query, top_n=max_results)
+                
+                st.markdown(f'<div class="cluster-badge">Topology: {result["cluster_label"]}</div>', unsafe_allow_html=True)
+                
+                for idx, recipe in enumerate(result["similar_recipes"]):
+                    score = recipe["similarity"] * 100
+                    title = recipe["title"]
+                    ingredients_list = ", ".join(recipe["ingredients"])
+                    
+                    st.markdown(f'''
+                    <div class="recipe-card">
+                        <div class="recipe-title">{title}</div>
+                        <div class="recipe-meta">
+                            <span class="similarity-score">{score:.1f}% Match</span>
+                        </div>
+                        <div class="recipe-ingredients">
+                            <strong style="color:#FFF;">Components:</strong><br/>
+                            {ingredients_list}
+                        </div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
+                    # Layout row for operations
+                    col1, col2 = st.columns([1, 4])
+                    
+                    with col1:
+                        if title in st.session_state.cookbook:
+                            st.button("Saved ✓", key=f"saved_{idx}", disabled=True)
+                        else:
+                            if st.button("Save Recipe", key=f"save_{idx}"):
+                                st.session_state.cookbook[title] = recipe
+                                st.rerun()
+
+                    with col2:
+                        with st.expander("Preparation Protocol"):
+                            for step in recipe["directions"]:
+                                st.markdown(f'<div style="color: #CCC; font-weight: 300; padding-bottom: 0.5rem;">• {step}</div>', unsafe_allow_html=True)
+                    
+                    st.write("") # Spacer
+
+            except Exception as e:
+                st.error("No valid flavor topology found. Try more common ingredients.")
+
+with tab2:
+    if not st.session_state.cookbook:
+        st.markdown("<div style='text-align: center; color: #666; margin-top: 5rem;'>Your cookbook is empty.</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("### Master Grocery List")
+        
+        # Aggregate Shopping List using parsed NER
+        master_ingredients = set()
+        for r_name, r_data in st.session_state.cookbook.items():
+            for item in r_data["ingredients_ner"]:
+                master_ingredients.add(item.lower())
+                
+        # Generate styled tags for groceries
+        grocery_html = ""
+        for item in sorted(master_ingredients):
+            grocery_html += f'<span style="display:inline-block; background:rgba(255,255,255,0.05); border:1px solid #333; padding:0.4rem 0.8rem; border-radius:8px; margin:0.3rem; font-size:0.9rem; color:#DDD;">{item}</span>'
+        st.markdown(f"<div style='margin-bottom: 3rem;'>{grocery_html}</div>", unsafe_allow_html=True)
+
+        st.markdown("### Saved Formulations")
+        for title, recipe in st.session_state.cookbook.items():
+            st.markdown("---")
+            col_t, col_b = st.columns([4, 1])
+            with col_t:
+                st.markdown(f"<h3 style='margin:0; font-weight:400;'>{title}</h3>", unsafe_allow_html=True)
+            with col_b:
+                if st.button("Remove", key=f"remove_{title}"):
+                    del st.session_state.cookbook[title]
+                    st.rerun()
+            
+            st.write(f"**Requires:** {', '.join(recipe['ingredients'])}")
+            
+            # Interactive Checklists for Cooking
+            st.markdown("<br/>**Preparation:**", unsafe_allow_html=True)
+            for s_idx, step in enumerate(recipe["directions"]):
+                # Create a unique, deterministic key for each checkbox
+                st.checkbox(step, key=f"chk_{hash(title)}_{s_idx}")
