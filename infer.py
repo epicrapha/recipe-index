@@ -61,14 +61,8 @@ embeddings = np.load("recipe_model_lite/recipe_search_index_lite.npy")
 logger.info(f"Ready. {len(recipes_df):,} recipes loaded.")
 
 
-try:
-    import en_core_web_sm
-    nlp = en_core_web_sm.load(disable=["parser"])
-except ImportError:
-    logger.warning("en_core_web_sm module missing via import. Engaging native spacy.cli.download sequence...")
-    from spacy.cli import download
-    download("en_core_web_sm")
-    nlp = spacy.load("en_core_web_sm", disable=["parser"])
+import en_core_web_sm
+nlp = en_core_web_sm.load(disable=["parser"])
 
 _pca_cache = None
 _cluster_cache = None
