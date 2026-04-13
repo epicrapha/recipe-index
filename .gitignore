@@ -10,8 +10,5 @@ wheels/
 .venv
 
 # Data and Models
-recipe_model/*.npy
-recipe_model/*.csv
-recipe_model/*.kv
-recipe_model/*.joblib
-recipe_model/*.pkl
+*.npy
+*.csv
