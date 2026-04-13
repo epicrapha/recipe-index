@@ -61,8 +61,8 @@ embeddings = np.load("recipe_model_lite/recipe_search_index_lite.npy")
 logger.info(f"Ready. {len(recipes_df):,} recipes loaded.")
 
 
-import en_core_web_sm
-nlp = en_core_web_sm.load(disable=["parser"])
+import spacy
+nlp = spacy.load("local_spacy", disable=["parser"])
 
 _pca_cache = None
 _cluster_cache = None
